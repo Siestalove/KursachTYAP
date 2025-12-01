@@ -63,6 +63,53 @@ function DFAGraph({ dfa }) {
   const minHeight = 900
   const padding = 120
   const stateRadius = 40
+  const svgRef = React.useRef(null)
+
+  // Функция для скачивания графа как PNG изображения
+  const downloadGraphImage = () => {
+    if (!svgRef.current) return
+
+    try {
+      // Получаем SVG элемент
+      const svgElement = svgRef.current
+      const serializer = new XMLSerializer()
+      const svgString = serializer.serializeToString(svgElement)
+      
+      // Создаем canvas для конвертации в PNG
+      const canvas = document.createElement('canvas')
+      canvas.width = minWidth
+      canvas.height = minHeight
+      const ctx = canvas.getContext('2d')
+      
+      // Создаем Image из SVG
+      const img = new Image()
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
+      const url = URL.createObjectURL(svgBlob)
+      
+      img.onload = () => {
+        // Рисуем на canvas
+        ctx.fillStyle = 'white'
+        ctx.fillRect(0, 0, minWidth, minHeight)
+        ctx.drawImage(img, 0, 0)
+        
+        // Конвертируем canvas в PNG и скачиваем
+        canvas.toBlob((blob) => {
+          const downloadUrl = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.download = 'dfa-graph.png'
+          link.href = downloadUrl
+          link.click()
+          URL.revokeObjectURL(downloadUrl)
+          URL.revokeObjectURL(url)
+        }, 'image/png')
+      }
+      
+      img.src = url
+    } catch (error) {
+      console.error('Ошибка при скачивании изображения:', error)
+      alert('Произошла ошибка при скачивании изображения')
+    }
+  }
 
   const calculatePositions = () => {
     const positions = {}
@@ -87,7 +134,7 @@ function DFAGraph({ dfa }) {
 
   const positions = calculatePositions()
 
-  // Собираем все переходы
+  // Собираем все переходы из таблицы (для ДКА - каждый переход уникален)
   const transitions = []
   
   for (const state of dfa.states) {
@@ -98,67 +145,40 @@ function DFAGraph({ dfa }) {
           from: state,
           to: nextState,
           symbol: symbol,
-          isSelf: state === nextState
+          isSelf: state === nextState,
+          key: `${state}-${symbol}-${nextState}` // Уникальный ключ для каждого перехода
         })
       }
     }
   }
 
-  // Группируем переходы для отрисовки
+  // Группируем переходы для объединения меток (только если из одного состояния в одно и то же по разным символам)
   const groupTransitions = (transitions) => {
     const groups = new Map()
     
     transitions.forEach(trans => {
-      const key = trans.isSelf ? `self-${trans.from}` : 
-                 trans.from < trans.to ? `${trans.from}-${trans.to}` : `${trans.to}-${trans.from}`
+      // Ключ: направленная пара (from, to) - это важно для ДКА!
+      const key = `${trans.from}->${trans.to}`
       
       if (!groups.has(key)) {
         groups.set(key, {
           from: trans.from,
           to: trans.to,
           isSelf: trans.isSelf,
-          symbols: new Set(),
+          symbols: [],
           count: 0
         })
       }
       
       const group = groups.get(key)
-      group.symbols.add(trans.symbol)
+      group.symbols.push(trans.symbol)
       group.count++
     })
     
-    return Array.from(groups.values()).map(group => ({
-      ...group,
-      symbols: Array.from(group.symbols)
-    }))
+    return Array.from(groups.values())
   }
 
   const transitionGroups = groupTransitions(transitions)
-
-  // Расчет позиции для метки перехода
-  const calculateLabelPosition = (startPos, endPos, groupIndex, totalGroups) => {
-    const midX = (startPos.x + endPos.x) / 2
-    const midY = (startPos.y + endPos.y) / 2
-    
-    const dx = endPos.x - startPos.x
-    const dy = endPos.y - startPos.y
-    const distance = Math.sqrt(dx * dx + dy * dy)
-    
-    if (distance === 0) return { x: midX, y: midY, angle: 0 }
-    
-    // Смещаем метки для разных переходов между одинаковыми состояниями
-    const offsetDistance = 30 + (groupIndex * 25)
-    const offsetX = (-dy / distance) * offsetDistance
-    const offsetY = (dx / distance) * offsetDistance
-    
-    const angle = Math.atan2(dy, dx) * 180 / Math.PI
-    
-    return {
-      x: midX + offsetX,
-      y: midY + offsetY,
-      angle: Math.abs(angle) > 90 ? angle + 180 : angle
-    }
-  }
 
   // Отрисовка самоцикла
   const renderSelfLoop = (state, symbols, pos, loopIndex) => {
@@ -218,6 +238,38 @@ function DFAGraph({ dfa }) {
 
   return (
     <>
+      {/* Кнопка скачивания */}
+      <div style={{ 
+        marginBottom: '16px', 
+        display: 'flex', 
+        justifyContent: 'flex-end',
+        gap: '10px'
+      }}>
+        <button
+          onClick={downloadGraphImage}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#2196F3',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'background-color 0.2s',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}
+          onMouseOver={(e) => e.target.style.backgroundColor = '#1976D2'}
+          onMouseOut={(e) => e.target.style.backgroundColor = '#2196F3'}
+        >
+          <span>📥</span>
+          Скачать граф как изображение
+        </button>
+      </div>
+
       <div style={{ 
         overflowX: 'auto', 
         overflowY: 'auto', 
@@ -228,6 +280,7 @@ function DFAGraph({ dfa }) {
         border: '1px solid #ddd' 
       }}>
         <svg 
+          ref={svgRef}
           width={minWidth} 
           height={minHeight} 
           style={{ 
@@ -239,7 +292,7 @@ function DFAGraph({ dfa }) {
           }}
         >
           <defs>
-            {/* Стрелка для обычных переходов */}
+            {/* Стрелка для переходов */}
             <marker
               id="arrowhead-blue"
               viewBox="0 0 10 10"
@@ -250,19 +303,6 @@ function DFAGraph({ dfa }) {
               orient="auto"
             >
               <path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3" />
-            </marker>
-            
-            {/* Стрелка для обратных переходов */}
-            <marker
-              id="arrowhead-green"
-              viewBox="0 0 10 10"
-              refX="9"
-              refY="5"
-              markerWidth="7"
-              markerHeight="7"
-              orient="auto"
-            >
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#4CAF50" />
             </marker>
             
             {/* Стрелка для самоциклов */}
@@ -311,16 +351,10 @@ function DFAGraph({ dfa }) {
             return null
           }
 
-          const { x, y } = calculateLabelPosition(
-            startPos, 
-            endPos, 
-            groupIndex, 
-            transitionGroups.length
+          // Проверяем, есть ли обратный переход
+          const hasBackward = transitionGroups.some(g => 
+            g.from === to && g.to === from && !g.isSelf
           )
-          
-          const isReverse = groupIndex > 0 && from < to
-          const arrowType = isReverse ? "url(#arrowhead-green)" : "url(#arrowhead-blue)"
-          const lineColor = isReverse ? "#4CAF50" : "#2196F3"
           
           // Рассчитываем точки касания кругов
           const dx = endPos.x - startPos.x
@@ -339,14 +373,29 @@ function DFAGraph({ dfa }) {
           const endX = endPos.x + endOffsetX
           const endY = endPos.y + endOffsetY
           
-          // Кривая для обратных переходов
-          const controlX = (startX + endX) / 2 + (-dy / distance) * 40
-          const controlY = (startY + endY) / 2 + (dx / distance) * 40
+          // Если есть обратный переход, делаем изгиб
+          const needsCurve = hasBackward
+          const curveOffset = 40 // Величина изгиба
+          const controlX = (startX + endX) / 2 + (-dy / distance) * curveOffset
+          const controlY = (startY + endY) / 2 + (dx / distance) * curveOffset
+          
+          // Позиция метки
+          let labelX, labelY
+          if (needsCurve) {
+            labelX = (startX + controlX + endX) / 3
+            labelY = (startY + controlY + endY) / 3
+          } else {
+            labelX = (startX + endX) / 2
+            labelY = (startY + endY) / 2
+          }
+          
+          const arrowType = "url(#arrowhead-blue)"
+          const lineColor = "#2196F3"
 
           return (
             <g key={`${from}-${to}-${groupIndex}`}>
               {/* Линия перехода */}
-              {isReverse ? (
+              {needsCurve ? (
                 <path
                   d={`M ${startX} ${startY} Q ${controlX} ${controlY}, ${endX} ${endY}`}
                   stroke={lineColor}
@@ -368,8 +417,8 @@ function DFAGraph({ dfa }) {
               
               {/* Фон для метки */}
               <rect
-                x={x - (symbols.join(',').length * 4 + 10)}
-                y={y - 12}
+                x={labelX - (symbols.join(',').length * 4 + 10)}
+                y={labelY - 12}
                 width={symbols.join(',').length * 8 + 20}
                 height={20}
                 fill="white"
@@ -379,22 +428,10 @@ function DFAGraph({ dfa }) {
                 opacity="0.95"
               />
               
-              {/* Соединительная линия от метки к стрелке */}
-              <line
-                x1={x}
-                y1={y}
-                x2={isReverse ? controlX : (startX + endX) / 2}
-                y2={isReverse ? controlY : (startY + endY) / 2}
-                stroke={lineColor}
-                strokeWidth="1"
-                strokeDasharray="3,3"
-                opacity="0.6"
-              />
-              
               {/* Текст символов */}
               <text
-                x={x}
-                y={y}
+                x={labelX}
+                y={labelY}
                 textAnchor="middle"
                 dy="0.3em"
                 fontSize="11"
@@ -639,75 +676,6 @@ function DFAGraph({ dfa }) {
               </div>
             </div>
           </div>
-          
-          {/* Переходы */}
-          <div>
-            <h5 style={{ 
-              fontWeight: '600', 
-              color: '#374151', 
-              marginBottom: '12px',
-              fontSize: '14px'
-            }}>
-              Переходы:
-            </h5>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <svg width="50" height="24" style={{ flexShrink: 0 }}>
-                  <defs>
-                    <marker id="legend-arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3" />
-                    </marker>
-                  </defs>
-                  <line x1="5" y1="12" x2="45" y2="12" stroke="#2196F3" strokeWidth="2" markerEnd="url(#legend-arrow-blue)"/>
-                </svg>
-                <div style={{ fontSize: '13px', color: '#1565C0', fontWeight: '500' }}>
-                  Прямой переход
-                </div>
-              </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <svg width="50" height="24" style={{ flexShrink: 0 }}>
-                  <defs>
-                    <marker id="legend-arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#4CAF50" />
-                    </marker>
-                  </defs>
-                  <path d="M5,16 Q25,4 45,16" stroke="#4CAF50" fill="none" strokeWidth="2" markerEnd="url(#legend-arrow-green)"/>
-                </svg>
-                <div style={{ fontSize: '13px', color: '#2e7d32', fontWeight: '500' }}>
-                  Обратный переход (кривая)
-                </div>
-              </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <svg width="50" height="40" style={{ flexShrink: 0 }}>
-                  <defs>
-                    <marker id="legend-arrow-pink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#e91e63" />
-                    </marker>
-                  </defs>
-                  <path d="M25,20 C35,10 40,15 35,25 C30,35 25,30 25,20" stroke="#e91e63" fill="none" strokeWidth="2" markerEnd="url(#legend-arrow-pink)"/>
-                </svg>
-                <div style={{ fontSize: '13px', color: '#c2185b', fontWeight: '500' }}>
-                  Самоцикл (петля)
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div style={{ 
-          marginTop: '16px', 
-          paddingTop: '16px', 
-          borderTop: '1px solid #e5e7eb',
-          fontSize: '12px',
-          color: '#6b7280',
-          lineHeight: '1.6'
-        }}>
-          <strong style={{ color: '#374151' }}>Примечания:</strong><br/>
-          • Символы на стрелках (через запятую) указывают, по каким входным символам происходит переход<br/>
-          • Пунктирные линии соединяют метки с соответствующими переходами<br/>
-          • Начальное состояние помечено входящей стрелкой слева
         </div>
       </div>
     </>
