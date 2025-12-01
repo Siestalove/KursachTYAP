@@ -242,9 +242,10 @@ function buildDFA(alphabet, substring, multiplicity) {
   const substringArray = substring.split('')
   const substringLen = substringArray.length
   
-  // Состояния представлены как (prefixLen, lengthMod)
+  // Состояния представлены как (prefixLen, lengthMod, found)
   // prefixLen: сколько символов подстроки совпадает с концом текущей строки (0...substringLen)
   // lengthMod: остаток от деления длины строки на multiplicity (0...multiplicity-1)
+  // found: была ли найдена подстрока хотя бы один раз (true/false)
   const states = new Set()
   const transitions = {}
   const stateMap = new Map()
@@ -252,8 +253,8 @@ function buildDFA(alphabet, substring, multiplicity) {
   let stateId = 0
   
   // Создание или получение состояния
-  const getOrCreateState = (prefixLen, lengthMod) => {
-    const key = `${prefixLen},${lengthMod}`
+  const getOrCreateState = (prefixLen, lengthMod, found) => {
+    const key = `${prefixLen},${lengthMod},${found}`
     if (stateMap.has(key)) {
       return stateMap.get(key)
     }
@@ -293,46 +294,75 @@ function buildDFA(alphabet, substring, multiplicity) {
     return 0
   }
   
-  // Начальное состояние: префикс длины 0, длина строки 0 mod multiplicity
-  const initialState = getOrCreateState(0, 0)
+  // Начальное состояние: префикс длины 0, длина строки 0 mod multiplicity, подстрока еще не найдена
+  const initialState = getOrCreateState(0, 0, false)
   
   // Построение всех состояний и переходов
-  // Нам нужно обработать все комбинации (prefixLen, lengthMod)
+  // Нам нужно обработать все комбинации (prefixLen, lengthMod, found)
   for (let prefixLen = 0; prefixLen <= substringLen; prefixLen++) {
     for (let lengthMod = 0; lengthMod < multiplicity; lengthMod++) {
-      const currentState = getOrCreateState(prefixLen, lengthMod)
-      transitions[currentState] = {}
-      
-      for (const symbol of alphabetArray) {
-        let newPrefixLen
+      for (const found of [false, true]) {
+        // Если found=true, но prefixLen=substringLen, это избыточное состояние
+        // (когда prefixLen=substringLen, found автоматически становится true)
+        if (found && prefixLen === substringLen) continue
         
-        if (prefixLen === substringLen) {
-          // Уже нашли подстроку, продолжаем искать новые вхождения
-          newPrefixLen = computeNextPrefix(substringLen - 1, symbol)
-        } else if (substringArray[prefixLen] === symbol) {
-          // Символ продолжает текущий префикс
-          newPrefixLen = prefixLen + 1
-        } else {
-          // Символ не продолжает префикс, используем откат
-          newPrefixLen = computeNextPrefix(prefixLen, symbol)
+        const currentState = getOrCreateState(prefixLen, lengthMod, found)
+        transitions[currentState] = {}
+        
+        for (const symbol of alphabetArray) {
+          let newPrefixLen
+          let newFound = found // По умолчанию сохраняем текущее значение found
+          
+          if (prefixLen === substringLen) {
+            // Мы в "особом" состоянии, где только что нашли подстроку
+            // Это состояние существует только с found=false (первое нахождение)
+            // После этого переходим в состояния с found=true
+            newPrefixLen = computeNextPrefix(substringLen - 1, symbol)
+            newFound = true // Подстрока найдена!
+          } else if (substringArray[prefixLen] === symbol) {
+            // Символ продолжает текущий префикс
+            newPrefixLen = prefixLen + 1
+            // Если достигли полной длины подстроки, устанавливаем found=true
+            if (newPrefixLen === substringLen) {
+              newFound = true
+            }
+          } else {
+            // Символ не продолжает префикс, используем откат
+            newPrefixLen = computeNextPrefix(prefixLen, symbol)
+            // Проверяем, достигли ли мы полной длины подстроки после отката
+            if (newPrefixLen === substringLen) {
+              newFound = true
+            }
+          }
+          
+          // Новый остаток длины
+          const newLengthMod = (lengthMod + 1) % multiplicity
+          
+          // Создаем переход
+          const nextState = getOrCreateState(newPrefixLen, newLengthMod, newFound)
+          transitions[currentState][symbol] = nextState
         }
-        
-        // Новый остаток длины
-        const newLengthMod = (lengthMod + 1) % multiplicity
-        
-        // Создаем переход
-        const nextState = getOrCreateState(newPrefixLen, newLengthMod)
-        transitions[currentState][symbol] = nextState
       }
     }
   }
   
-  // Финальные состояния: подстрока найдена (prefixLen === substringLen) И длина кратна multiplicity (lengthMod === 0)
+  // Финальные состояния: подстрока найдена (found === true) И длина кратна multiplicity (lengthMod === 0)
   const finalStates = new Set()
-  for (let lengthMod = 0; lengthMod < multiplicity; lengthMod++) {
-    const state = getOrCreateState(substringLen, lengthMod)
-    if (lengthMod === 0) {
-      finalStates.add(state)
+  // Проверяем все возможные состояния с lengthMod=0 и found=true
+  for (let prefixLen = 0; prefixLen <= substringLen; prefixLen++) {
+    // Для prefixLen=substringLen состояние автоматически имеет found=true
+    if (prefixLen === substringLen) {
+      const state = getOrCreateState(substringLen, 0, false) // На самом деле это первое обнаружение
+      // Это состояние НЕ финальное, так как found еще не установлен в true в прошлых шагах
+      // Оно финальное только если мы ТОЛЬКО ЧТО завершили подстроку на четной позиции
+      // Но логика такова: если prefixLen=substringLen и lengthMod=0, это финальное
+      if (stateMap.has(`${substringLen},0,false`)) {
+        finalStates.add(stateMap.get(`${substringLen},0,false`))
+      }
+    }
+    // Также добавляем все состояния с found=true и lengthMod=0
+    if (stateMap.has(`${prefixLen},0,true`)) {
+      finalStates.add(stateMap.get(`${prefixLen},0,true`))
     }
   }
   
