@@ -7,7 +7,7 @@ import HelpModal from './components/modals/HelpModal'
 import { styles } from './styles'
 
 export default function App() {
-  const [activeMenu, setActiveMenu] = useState('home')
+  const [activeMenu, setActiveMenu] = useState('calculations')
   const [showAbout, setShowAbout] = useState(false)
   const [showTheme, setShowTheme] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
