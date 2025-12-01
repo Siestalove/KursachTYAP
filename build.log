@@ -1,0 +1,26 @@
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+
+> dfa-builder@1.0.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  58.92 kB  build/static/js/main.0e19b340.js
+  861 B     build/static/css/main.80735a7a.css
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  npm install -g serve
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+

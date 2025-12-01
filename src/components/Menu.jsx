@@ -6,7 +6,6 @@ export default function Menu({ onMenuClick, activeMenu }) {
   const [isOpen, setIsOpen] = useState(false)
 
   const menuItems = [
-    { id: 'home', label: 'Главная', icon: MenuIcon },
     { id: 'calculations', label: 'Расчёты', icon: Calculator },
     { id: 'export', label: 'Запись результатов', icon: Download },
     { id: 'help', label: 'Справка', icon: HelpCircle },

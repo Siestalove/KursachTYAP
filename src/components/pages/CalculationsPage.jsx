@@ -238,116 +238,104 @@ export default function CalculationsPage() {
 }
 
 function buildDFA(alphabet, substring, multiplicity) {
-  const states = new Set()
-  const transitions = {}
-
   const alphabetArray = alphabet.split('')
   const substringArray = substring.split('')
-
-  let stateId = 0
-  const initialState = `q${stateId}`
-  states.add(initialState)
-  stateId++
-
+  const substringLen = substringArray.length
+  
+  // Состояния представлены как (prefixLen, lengthMod)
+  // prefixLen: сколько символов подстроки совпадает с концом текущей строки (0...substringLen)
+  // lengthMod: остаток от деления длины строки на multiplicity (0...multiplicity-1)
+  const states = new Set()
+  const transitions = {}
   const stateMap = new Map()
-  stateMap.set('', initialState)
-
-  const getOrCreateState = (prefixMatch) => {
-    if (stateMap.has(prefixMatch)) {
-      return stateMap.get(prefixMatch)
+  
+  let stateId = 0
+  
+  // Создание или получение состояния
+  const getOrCreateState = (prefixLen, lengthMod) => {
+    const key = `${prefixLen},${lengthMod}`
+    if (stateMap.has(key)) {
+      return stateMap.get(key)
     }
-    const newState = `q${stateId++}`
-    states.add(newState)
-    stateMap.set(prefixMatch, newState)
-    return newState
+    const stateName = `q${stateId++}`
+    states.add(stateName)
+    stateMap.set(key, stateName)
+    return stateName
   }
-
-  const isMatch = (prefix) => {
-    if (prefix.length < substringArray.length) return false
-    for (let i = 0; i < substringArray.length; i++) {
-      if (prefix[prefix.length - substringArray.length + i] !== substringArray[i]) {
-        return false
+  
+  // Функция отката (failure function) - определяет новый префикс после добавления символа
+  const computeNextPrefix = (currentPrefixLen, symbol) => {
+    // Пробуем добавить символ к текущему префиксу
+    let testLen = currentPrefixLen
+    while (testLen > 0) {
+      if (substringArray[testLen] === symbol) {
+        return testLen + 1
       }
+      // Откатываемся назад
+      testLen = computeFailure(testLen)
     }
-    return true
+    // Проверяем, совпадает ли символ с началом подстроки
+    return substringArray[0] === symbol ? 1 : 0
   }
-
-  const computePrefix = (str) => {
-    for (let i = Math.min(str.length, substringArray.length - 1); i > 0; i--) {
+  
+  // Вычисление failure function для KMP-подобного алгоритма
+  const computeFailure = (len) => {
+    for (let k = len - 1; k > 0; k--) {
       let match = true
-      for (let j = 0; j < i; j++) {
-        if (str[str.length - i + j] !== substringArray[j]) {
+      for (let i = 0; i < k; i++) {
+        if (substringArray[i] !== substringArray[len - k + i]) {
           match = false
           break
         }
       }
-      if (match) return str.slice(-i)
+      if (match) return k
     }
-    return ''
+    return 0
   }
-
-  for (const state of states) {
-    transitions[state] = {}
-    for (const symbol of alphabetArray) {
-      const prefix = stateMap.entries().find(([_, s]) => s === state)?.[0] || ''
-      const newPrefix = isMatch(prefix + symbol) ? substring : computePrefix(prefix + symbol)
-      const nextState = getOrCreateState(newPrefix)
-      transitions[state][symbol] = nextState
-    }
-  }
-
-  const expandStates = () => {
-    let maxStates = 10
-    let iteration = 0
-    while (states.size < maxStates && iteration < 20) {
-      const statesToProcess = Array.from(states).slice()
-      for (const state of statesToProcess) {
-        for (const symbol of alphabetArray) {
-          const nextState = transitions[state]?.[symbol]
-          if (nextState && !states.has(nextState)) {
-            states.add(nextState)
-            transitions[nextState] = {}
-          }
-        }
-      }
-      iteration++
-    }
-  }
-
-  expandStates()
-
-  for (const state of states) {
-    if (!transitions[state]) {
-      transitions[state] = {}
+  
+  // Начальное состояние: префикс длины 0, длина строки 0 mod multiplicity
+  const initialState = getOrCreateState(0, 0)
+  
+  // Построение всех состояний и переходов
+  // Нам нужно обработать все комбинации (prefixLen, lengthMod)
+  for (let prefixLen = 0; prefixLen <= substringLen; prefixLen++) {
+    for (let lengthMod = 0; lengthMod < multiplicity; lengthMod++) {
+      const currentState = getOrCreateState(prefixLen, lengthMod)
+      transitions[currentState] = {}
+      
       for (const symbol of alphabetArray) {
-        transitions[state][symbol] = initialState
-      }
-    }
-    for (const symbol of alphabetArray) {
-      if (!transitions[state][symbol]) {
-        transitions[state][symbol] = initialState
+        let newPrefixLen
+        
+        if (prefixLen === substringLen) {
+          // Уже нашли подстроку, продолжаем искать новые вхождения
+          newPrefixLen = computeNextPrefix(substringLen - 1, symbol)
+        } else if (substringArray[prefixLen] === symbol) {
+          // Символ продолжает текущий префикс
+          newPrefixLen = prefixLen + 1
+        } else {
+          // Символ не продолжает префикс, используем откат
+          newPrefixLen = computeNextPrefix(prefixLen, symbol)
+        }
+        
+        // Новый остаток длины
+        const newLengthMod = (lengthMod + 1) % multiplicity
+        
+        // Создаем переход
+        const nextState = getOrCreateState(newPrefixLen, newLengthMod)
+        transitions[currentState][symbol] = nextState
       }
     }
   }
-
+  
+  // Финальные состояния: подстрока найдена (prefixLen === substringLen) И длина кратна multiplicity (lengthMod === 0)
   const finalStates = new Set()
-  for (const state of states) {
-    const prefix = stateMap.entries().find(([_, s]) => s === state)?.[0] || ''
-    if (prefix === substring) {
+  for (let lengthMod = 0; lengthMod < multiplicity; lengthMod++) {
+    const state = getOrCreateState(substringLen, lengthMod)
+    if (lengthMod === 0) {
       finalStates.add(state)
     }
   }
-
-  if (finalStates.size === 0) {
-    const finalState = `q${stateId}`
-    states.add(finalState)
-    finalStates.add(finalState)
-    for (const symbol of alphabetArray) {
-      transitions[finalState] = transitions[finalState] || {}
-      transitions[finalState][symbol] = finalState
-    }
-  }
-
+  
   return {
     states: Array.from(states),
     alphabet: alphabetArray,
