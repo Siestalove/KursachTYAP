@@ -21,7 +21,7 @@ export default function Menu({ onMenuClick, activeMenu }) {
       <div style={styles.navContainer}>
         <h1 style={styles.navTitle}>ДКА Конструктор</h1>
         
-        <ul style={{ ...styles.navMenu, display: 'flex', '@media (max-width: 768px)': { display: 'none' } }}>
+        <ul style={{ ...styles.navMenu, display: 'flex' }}>
           {menuItems.map(item => {
             const Icon = item.icon
             const isActive = activeMenu === item.id
@@ -56,7 +56,6 @@ export default function Menu({ onMenuClick, activeMenu }) {
           style={{
             ...styles.button,
             display: 'none',
-            '@media (max-width: 768px)': { display: 'inline-flex' },
             backgroundColor: 'transparent',
             color: '#374151',
           }}
@@ -68,7 +67,7 @@ export default function Menu({ onMenuClick, activeMenu }) {
       </div>
 
       {isOpen && (
-        <div style={{ borderTop: '1px solid #e5e7eb', display: 'none, '@media (max-width: 768px)': { display: 'block' } }}>
+        <div style={{ borderTop: '1px solid #e5e7eb' }}>
           {menuItems.map(item => {
             const Icon = item.icon
             const isActive = activeMenu === item.id
