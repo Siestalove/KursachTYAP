@@ -87,7 +87,7 @@ function DFAGraph({ dfa }) {
 
   const positions = calculatePositions()
 
-  // Собираем все переходы
+  // Собираем все переходы из таблицы (для ДКА - каждый переход уникален)
   const transitions = []
   
   for (const state of dfa.states) {
@@ -98,67 +98,40 @@ function DFAGraph({ dfa }) {
           from: state,
           to: nextState,
           symbol: symbol,
-          isSelf: state === nextState
+          isSelf: state === nextState,
+          key: `${state}-${symbol}-${nextState}` // Уникальный ключ для каждого перехода
         })
       }
     }
   }
 
-  // Группируем переходы для отрисовки
+  // Группируем переходы для объединения меток (только если из одного состояния в одно и то же по разным символам)
   const groupTransitions = (transitions) => {
     const groups = new Map()
     
     transitions.forEach(trans => {
-      const key = trans.isSelf ? `self-${trans.from}` : 
-                 trans.from < trans.to ? `${trans.from}-${trans.to}` : `${trans.to}-${trans.from}`
+      // Ключ: направленная пара (from, to) - это важно для ДКА!
+      const key = `${trans.from}->${trans.to}`
       
       if (!groups.has(key)) {
         groups.set(key, {
           from: trans.from,
           to: trans.to,
           isSelf: trans.isSelf,
-          symbols: new Set(),
+          symbols: [],
           count: 0
         })
       }
       
       const group = groups.get(key)
-      group.symbols.add(trans.symbol)
+      group.symbols.push(trans.symbol)
       group.count++
     })
     
-    return Array.from(groups.values()).map(group => ({
-      ...group,
-      symbols: Array.from(group.symbols)
-    }))
+    return Array.from(groups.values())
   }
 
   const transitionGroups = groupTransitions(transitions)
-
-  // Расчет позиции для метки перехода
-  const calculateLabelPosition = (startPos, endPos, groupIndex, totalGroups) => {
-    const midX = (startPos.x + endPos.x) / 2
-    const midY = (startPos.y + endPos.y) / 2
-    
-    const dx = endPos.x - startPos.x
-    const dy = endPos.y - startPos.y
-    const distance = Math.sqrt(dx * dx + dy * dy)
-    
-    if (distance === 0) return { x: midX, y: midY, angle: 0 }
-    
-    // Смещаем метки для разных переходов между одинаковыми состояниями
-    const offsetDistance = 30 + (groupIndex * 25)
-    const offsetX = (-dy / distance) * offsetDistance
-    const offsetY = (dx / distance) * offsetDistance
-    
-    const angle = Math.atan2(dy, dx) * 180 / Math.PI
-    
-    return {
-      x: midX + offsetX,
-      y: midY + offsetY,
-      angle: Math.abs(angle) > 90 ? angle + 180 : angle
-    }
-  }
 
   // Отрисовка самоцикла
   const renderSelfLoop = (state, symbols, pos, loopIndex) => {
@@ -239,7 +212,7 @@ function DFAGraph({ dfa }) {
           }}
         >
           <defs>
-            {/* Стрелка для обычных переходов */}
+            {/* Стрелка для переходов */}
             <marker
               id="arrowhead-blue"
               viewBox="0 0 10 10"
@@ -250,19 +223,6 @@ function DFAGraph({ dfa }) {
               orient="auto"
             >
               <path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3" />
-            </marker>
-            
-            {/* Стрелка для обратных переходов */}
-            <marker
-              id="arrowhead-green"
-              viewBox="0 0 10 10"
-              refX="9"
-              refY="5"
-              markerWidth="7"
-              markerHeight="7"
-              orient="auto"
-            >
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#4CAF50" />
             </marker>
             
             {/* Стрелка для самоциклов */}
@@ -311,16 +271,10 @@ function DFAGraph({ dfa }) {
             return null
           }
 
-          const { x, y } = calculateLabelPosition(
-            startPos, 
-            endPos, 
-            groupIndex, 
-            transitionGroups.length
+          // Проверяем, есть ли обратный переход
+          const hasBackward = transitionGroups.some(g => 
+            g.from === to && g.to === from && !g.isSelf
           )
-          
-          const isReverse = groupIndex > 0 && from < to
-          const arrowType = isReverse ? "url(#arrowhead-green)" : "url(#arrowhead-blue)"
-          const lineColor = isReverse ? "#4CAF50" : "#2196F3"
           
           // Рассчитываем точки касания кругов
           const dx = endPos.x - startPos.x
@@ -339,14 +293,29 @@ function DFAGraph({ dfa }) {
           const endX = endPos.x + endOffsetX
           const endY = endPos.y + endOffsetY
           
-          // Кривая для обратных переходов
-          const controlX = (startX + endX) / 2 + (-dy / distance) * 40
-          const controlY = (startY + endY) / 2 + (dx / distance) * 40
+          // Если есть обратный переход, делаем изгиб
+          const needsCurve = hasBackward
+          const curveOffset = 40 // Величина изгиба
+          const controlX = (startX + endX) / 2 + (-dy / distance) * curveOffset
+          const controlY = (startY + endY) / 2 + (dx / distance) * curveOffset
+          
+          // Позиция метки
+          let labelX, labelY
+          if (needsCurve) {
+            labelX = (startX + controlX + endX) / 3
+            labelY = (startY + controlY + endY) / 3
+          } else {
+            labelX = (startX + endX) / 2
+            labelY = (startY + endY) / 2
+          }
+          
+          const arrowType = "url(#arrowhead-blue)"
+          const lineColor = "#2196F3"
 
           return (
             <g key={`${from}-${to}-${groupIndex}`}>
               {/* Линия перехода */}
-              {isReverse ? (
+              {needsCurve ? (
                 <path
                   d={`M ${startX} ${startY} Q ${controlX} ${controlY}, ${endX} ${endY}`}
                   stroke={lineColor}
@@ -368,8 +337,8 @@ function DFAGraph({ dfa }) {
               
               {/* Фон для метки */}
               <rect
-                x={x - (symbols.join(',').length * 4 + 10)}
-                y={y - 12}
+                x={labelX - (symbols.join(',').length * 4 + 10)}
+                y={labelY - 12}
                 width={symbols.join(',').length * 8 + 20}
                 height={20}
                 fill="white"
@@ -379,22 +348,10 @@ function DFAGraph({ dfa }) {
                 opacity="0.95"
               />
               
-              {/* Соединительная линия от метки к стрелке */}
-              <line
-                x1={x}
-                y1={y}
-                x2={isReverse ? controlX : (startX + endX) / 2}
-                y2={isReverse ? controlY : (startY + endY) / 2}
-                stroke={lineColor}
-                strokeWidth="1"
-                strokeDasharray="3,3"
-                opacity="0.6"
-              />
-              
               {/* Текст символов */}
               <text
-                x={x}
-                y={y}
+                x={labelX}
+                y={labelY}
                 textAnchor="middle"
                 dy="0.3em"
                 fontSize="11"
@@ -660,22 +617,32 @@ function DFAGraph({ dfa }) {
                   </defs>
                   <line x1="5" y1="12" x2="45" y2="12" stroke="#2196F3" strokeWidth="2" markerEnd="url(#legend-arrow-blue)"/>
                 </svg>
-                <div style={{ fontSize: '13px', color: '#1565C0', fontWeight: '500' }}>
-                  Прямой переход
+                <div>
+                  <div style={{ fontSize: '13px', color: '#1565C0', fontWeight: '500' }}>
+                    Переход по символу
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+                    Из одного состояния по одному символу — только в одно состояние (ДКА)
+                  </div>
                 </div>
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <svg width="50" height="24" style={{ flexShrink: 0 }}>
+                <svg width="50" height="28" style={{ flexShrink: 0 }}>
                   <defs>
-                    <marker id="legend-arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#4CAF50" />
+                    <marker id="legend-arrow-blue2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3" />
                     </marker>
                   </defs>
-                  <path d="M5,16 Q25,4 45,16" stroke="#4CAF50" fill="none" strokeWidth="2" markerEnd="url(#legend-arrow-green)"/>
+                  <path d="M5,18 Q25,6 45,18" stroke="#2196F3" fill="none" strokeWidth="2" markerEnd="url(#legend-arrow-blue2)"/>
                 </svg>
-                <div style={{ fontSize: '13px', color: '#2e7d32', fontWeight: '500' }}>
-                  Обратный переход (кривая)
+                <div>
+                  <div style={{ fontSize: '13px', color: '#1565C0', fontWeight: '500' }}>
+                    Переход с изгибом
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+                    Когда есть переход в обе стороны между двумя состояниями
+                  </div>
                 </div>
               </div>
               
