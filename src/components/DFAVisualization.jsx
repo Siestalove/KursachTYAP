@@ -59,10 +59,10 @@ function DFATable({ dfa }) {
 }
 
 function DFAGraph({ dfa }) {
-  const width = 800
-  const height = 600
-  const padding = 50
-  const stateRadius = 30
+  const minWidth = 1000
+  const minHeight = 800
+  const padding = 100
+  const stateRadius = 35
 
   const calculatePositions = () => {
     const positions = {}
@@ -70,9 +70,9 @@ function DFAGraph({ dfa }) {
 
     if (n === 0) return positions
 
-    const cx = width / 2
-    const cy = height / 2
-    const radius = Math.min((width - 2 * padding) / 2, (height - 2 * padding) / 2)
+    const cx = minWidth / 2
+    const cy = minHeight / 2
+    const radius = Math.min((minWidth - 2 * padding) / 2, (minHeight - 2 * padding) / 2)
 
     for (let i = 0; i < n; i++) {
       const angle = (2 * Math.PI * i) / n
@@ -109,8 +109,8 @@ function DFAGraph({ dfa }) {
   }
 
   return (
-    <div className="flex justify-center items-center p-4 bg-gray-50 rounded border border-gray-200 overflow-auto">
-      <svg width={width} height={height} className="border border-gray-300 bg-white rounded">
+    <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '600px', padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+      <svg width={minWidth} height={minHeight} style={{ backgroundColor: 'white', borderRadius: '8px', display: 'block', minWidth: minWidth, minHeight: minHeight }}>
         {/* Рисуем переходы (дуги) */}
         {Array.from(edges.entries()).map(([edgeKey, symbols], index) => {
           const parts = edgeKey.split('-')
@@ -125,8 +125,8 @@ function DFAGraph({ dfa }) {
 
           if (isSelf) {
             const loopX = startPos.x
-            const loopY = startPos.y - 60
-            const loopRadius = 40
+            const loopY = startPos.y - 70
+            const loopRadius = 45
 
             return (
               <g key={edgeKey}>
@@ -136,15 +136,21 @@ function DFAGraph({ dfa }) {
                   strokeWidth="2"
                   fill="none"
                 />
-                <text
-                  x={loopX}
-                  y={loopY - 50}
-                  textAnchor="middle"
-                  className="text-xs font-semibold"
-                  fill="#333"
-                >
-                  {symbols.join(',')}
-                </text>
+                {/* Текст символов в несколько строк */}
+                {symbols.map((sym, idx) => (
+                  <text
+                    key={`${edgeKey}-${idx}`}
+                    x={loopX}
+                    y={loopY - 60 + idx * 14}
+                    textAnchor="middle"
+                    fontSize="12"
+                    fontWeight="600"
+                    fill="#333"
+                    backgroundColor="white"
+                  >
+                    {sym}
+                  </text>
+                ))}
               </g>
             )
           } else {
@@ -155,22 +161,14 @@ function DFAGraph({ dfa }) {
             const dy = endPos.y - startPos.y
             const distance = Math.sqrt(dx * dx + dy * dy)
 
-            const offsetX = (-dy / distance) * 15
-            const offsetY = (dx / distance) * 15
+            const offsetX = (-dy / distance) * 25
+            const offsetY = (dx / distance) * 25
 
             const labelX = midX + offsetX
             const labelY = midY + offsetY
 
             return (
               <g key={edgeKey}>
-                <line
-                  x1={startPos.x}
-                  y1={startPos.y}
-                  x2={endPos.x}
-                  y2={endPos.y}
-                  stroke="#666"
-                  strokeWidth="2"
-                />
                 <defs>
                   <marker
                     id={`arrowhead-${index}`}
@@ -192,15 +190,33 @@ function DFAGraph({ dfa }) {
                   strokeWidth="2"
                   markerEnd={`url(#arrowhead-${index})`}
                 />
-                <text
-                  x={labelX}
-                  y={labelY}
-                  textAnchor="middle"
-                  className="text-xs font-semibold bg-white px-1"
-                  fill="#333"
-                >
-                  {symbols.join(',')}
-                </text>
+                {/* Рисуем фон для текста */}
+                <rect
+                  x={labelX - (symbols.length * 6)}
+                  y={labelY - 12}
+                  width={symbols.length * 12 + 8}
+                  height={16}
+                  fill="white"
+                  stroke="#f0f0f0"
+                  strokeWidth="1"
+                />
+                {/* Текст символов в несколько строк */}
+                {symbols.map((sym, idx) => {
+                  const textX = labelX - (symbols.length - 1) * 6 + idx * 12
+                  return (
+                    <text
+                      key={`${edgeKey}-${idx}`}
+                      x={textX}
+                      y={labelY + 2}
+                      textAnchor="middle"
+                      fontSize="12"
+                      fontWeight="600"
+                      fill="#333"
+                    >
+                      {sym}
+                    </text>
+                  )
+                })}
               </g>
             )
           }
