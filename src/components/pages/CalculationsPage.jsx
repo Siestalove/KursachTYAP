@@ -3,6 +3,7 @@ import { Plus, Trash2, Eye, EyeOff } from 'lucide-react'
 import DFABuilder from '../DFABuilder'
 import StringChecker from '../StringChecker'
 import DFAVisualization from '../DFAVisualization'
+import { styles } from '../../styles'
 
 export default function CalculationsPage() {
   const [dfa, setDfa] = useState(null)
@@ -69,74 +70,84 @@ export default function CalculationsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="bg-white rounded-lg shadow-lg p-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Построение ДКА</h2>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      <div style={styles.card}>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#374151', marginBottom: '24px' }}>Построение ДКА</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Алфавит <span className="text-red-500">*</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px', marginBottom: '24px' }}>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>
+              Алфавит <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
               type="text"
               value={alphabet}
               onChange={(e) => setAlphabet(e.target.value)}
               placeholder="Пример: abc или 01"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={styles.input}
+              onFocus={(e) => Object.assign(e.target.style, styles.inputFocus)}
+              onBlur={(e) => { e.target.style.outline = 'none'; e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none' }}
             />
-            <p className="mt-2 text-xs text-gray-500">
+            <p style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>
               Введите символы алфавита без пробелов между ними
             </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Обязательная подцепочка <span className="text-red-500">*</span>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>
+              Обязательная подцепочка <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
               type="text"
               value={substring}
               onChange={(e) => setSubstring(e.target.value)}
               placeholder="Пример: ab или 10"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={styles.input}
+              onFocus={(e) => Object.assign(e.target.style, styles.inputFocus)}
+              onBlur={(e) => { e.target.style.outline = 'none'; e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none' }}
             />
-            <p className="mt-2 text-xs text-gray-500">
+            <p style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>
               Подцепочка, которая должна присутствовать в цепочках языка
             </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Кратность длины <span className="text-red-500">*</span>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>
+              Кратность длины <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
               type="number"
               value={multiplicity}
               onChange={(e) => setMultiplicity(Math.max(1, parseInt(e.target.value) || 1))}
               min="1"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={styles.input}
+              onFocus={(e) => Object.assign(e.target.style, styles.inputFocus)}
+              onBlur={(e) => { e.target.style.outline = 'none'; e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none' }}
             />
-            <p className="mt-2 text-xs text-gray-500">
+            <p style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>
               Длина цепочки должна быть кратна этому числу
             </p>
           </div>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">{success}</div>}
+        {error && <div style={styles.errorMessage}>{error}</div>}
+        {success && <div style={styles.successMessage}>{success}</div>}
 
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <button
             onClick={handleBuildDFA}
-            className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
+            style={{ ...styles.button, ...styles.buttonPrimary, width: '100%' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = styles.buttonPrimaryHover.backgroundColor}
+            onMouseLeave={(e) => e.target.style.backgroundColor = styles.buttonPrimary.backgroundColor}
           >
             <Plus size={20} />
             <span>Построить ДКА</span>
           </button>
           <button
             onClick={handleClear}
-            className="flex items-center justify-center space-x-2 bg-gray-400 text-white px-6 py-2 rounded-lg hover:bg-gray-500 transition font-semibold"
+            style={{ ...styles.button, ...styles.buttonSecondary, width: '100%' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = styles.buttonSecondaryHover.backgroundColor}
+            onMouseLeave={(e) => e.target.style.backgroundColor = styles.buttonSecondary.backgroundColor}
           >
             <Trash2 size={20} />
             <span>Очистить</span>
@@ -146,31 +157,41 @@ export default function CalculationsPage() {
 
       {dfa && (
         <>
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-800">Функция переходов</h3>
-              <div className="flex gap-2">
+          <div style={styles.card}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#374151' }}>Функция переходов</h3>
+              <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
-                    viewMode === 'table'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                  style={{
+                    ...styles.button,
+                    ...(viewMode === 'table' ? styles.buttonPrimary : styles.buttonSecondary)
+                  }}
+                  onMouseEnter={(e) => {
+                    if (viewMode !== 'table') e.target.style.backgroundColor = styles.buttonSecondaryHover.backgroundColor
+                  }}
+                  onMouseLeave={(e) => {
+                    if (viewMode !== 'table') e.target.style.backgroundColor = styles.buttonSecondary.backgroundColor
+                  }}
                 >
                   <Eye size={18} />
-                  <span className="text-sm font-medium">Таблица</span>
+                  <span style={{ fontSize: '14px', fontWeight: '500' }}>Таблица</span>
                 </button>
                 <button
                   onClick={() => setViewMode('graph')}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
-                    viewMode === 'graph'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                  style={{
+                    ...styles.button,
+                    ...(viewMode === 'graph' ? styles.buttonPrimary : styles.buttonSecondary)
+                  }}
+                  onMouseEnter={(e) => {
+                    if (viewMode !== 'graph') e.target.style.backgroundColor = styles.buttonSecondaryHover.backgroundColor
+                  }}
+                  onMouseLeave={(e) => {
+                    if (viewMode !== 'graph') e.target.style.backgroundColor = styles.buttonSecondary.backgroundColor
+                  }}
                 >
                   <EyeOff size={18} />
-                  <span className="text-sm font-medium">Граф</span>
+                  <span style={{ fontSize: '14px', fontWeight: '500' }}>Граф</span>
                 </button>
               </div>
             </div>

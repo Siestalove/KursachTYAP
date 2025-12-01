@@ -1,10 +1,11 @@
 import React from 'react'
+import { styles } from '../styles'
 
 export default function DFABuilder() {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-xl font-bold mb-4">Построение ДКА</h3>
-      <p className="text-gray-600">Компонент для построения ДКА</p>
+    <div style={styles.card}>
+      <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px' }}>Построение ДКА</h3>
+      <p style={{ color: '#6b7280' }}>Компонент для построения ДКА</p>
     </div>
   )
 }

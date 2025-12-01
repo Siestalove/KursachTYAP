@@ -1,58 +1,59 @@
 import React from 'react'
 import { Zap, BookOpen, Network } from 'lucide-react'
+import { styles } from '../../styles'
 
 export default function HomePage() {
   return (
-    <div className="py-8">
-      <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-        <h1 className="text-4xl font-bold text-blue-600 mb-4">
+    <div style={{ paddingBottom: '32px' }}>
+      <div style={{ ...styles.card, marginBottom: '32px' }}>
+        <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: '#2563eb', marginBottom: '16px' }}>
           Конструктор ДКА
         </h1>
-        <p className="text-gray-700 text-lg mb-6">
+        <p style={{ color: '#374151', fontSize: '18px', marginBottom: '24px' }}>
           Построение Детерминированного Конечного Автомата по описанию языка
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
-          <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mb-4">
-            <Network className="text-blue-600" size={24} />
+      <div style={styles.grid}>
+        <div style={{ ...styles.card, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', transition: 'box-shadow 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.1)'} onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', backgroundColor: '#dbeafe', borderRadius: '8px', marginBottom: '16px' }}>
+            <Network color="#2563eb" size={24} />
           </div>
-          <h3 className="text-xl font-bold mb-2">Построение ДКА</h3>
-          <p className="text-gray-600">
+          <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px' }}>Построение ДКА</h3>
+          <p style={{ color: '#6b7280', marginBottom: '12px' }}>
             Создайте детерминированный конечный автомат на основе:
           </p>
-          <ul className="mt-3 text-sm text-gray-600 space-y-1">
-            <li>• Алфавита</li>
-            <li>• Обязательной подцепочки</li>
-            <li>• Кратности длины цепочек</li>
+          <ul style={{ marginTop: '12px', fontSize: '14px', color: '#6b7280', paddingLeft: '20px', lineHeight: '1.6' }}>
+            <li>Алфавита</li>
+            <li>Обязательной подцепочки</li>
+            <li>Кратности длины цепочек</li>
           </ul>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
-          <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mb-4">
-            <Zap className="text-green-600" size={24} />
+        <div style={{ ...styles.card, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', transition: 'box-shadow 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.1)'} onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', backgroundColor: '#dcfce7', borderRadius: '8px', marginBottom: '16px' }}>
+            <Zap color='#16a34a' size={24} />
           </div>
-          <h3 className="text-xl font-bold mb-2">Проверка Цепочек</h3>
-          <p className="text-gray-600">
+          <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px' }}>Проверка Цепочек</h3>
+          <p style={{ color: '#6b7280', marginBottom: '12px' }}>
             Проверьте принадлежность введённых цепочек к языку с пошаговым отображением процесса.
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
-          <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg mb-4">
-            <BookOpen className="text-purple-600" size={24} />
+        <div style={{ ...styles.card, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', transition: 'box-shadow 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.1)'} onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', backgroundColor: '#f3e8ff', borderRadius: '8px', marginBottom: '16px' }}>
+            <BookOpen color='#9333ea' size={24} />
           </div>
-          <h3 className="text-xl font-bold mb-2">Визуализация</h3>
-          <p className="text-gray-600">
+          <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px' }}>Визуализация</h3>
+          <p style={{ color: '#6b7280', marginBottom: '12px' }}>
             Просмотрите функцию переходов в виде таблицы или графа.
           </p>
         </div>
       </div>
 
-      <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded">
-        <h3 className="text-lg font-bold text-blue-800 mb-3">Начало работы:</h3>
-        <ol className="list-decimal list-inside text-gray-700 space-y-2">
+      <div style={styles.infoBox}>
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#1e40af', marginBottom: '12px' }}>Начало работы:</h3>
+        <ol style={{ paddingLeft: '20px', lineHeight: '1.8', color: '#374151' }}>
           <li>Перейдите в раздел <strong>"Расчёты"</strong> для построения ДКА</li>
           <li>Введите параметры языка (алфавит, подцепочка, кратность)</li>
           <li>Система автоматически построит автомат</li>

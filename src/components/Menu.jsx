@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Menu as MenuIcon, Info, BookOpen, HelpCircle, Calculator, Download } from 'lucide-react'
+import { styles } from '../styles'
 
 export default function Menu({ onMenuClick, activeMenu }) {
-  const [isOpen, setIsOpen] = React.useState(false)
+  const [isOpen, setIsOpen] = useState(false)
 
   const menuItems = [
     { id: 'home', label: 'Главная', icon: MenuIcon },
@@ -16,68 +17,89 @@ export default function Menu({ onMenuClick, activeMenu }) {
   const toggleMenu = () => setIsOpen(!isOpen)
 
   return (
-    <nav className="bg-white shadow-md">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-8">
-            <h1 className="text-xl font-bold text-blue-600">ДКА Конструктор</h1>
-            <div className="hidden md:flex space-x-1">
-              {menuItems.map(item => {
-                const Icon = item.icon
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      onMenuClick(item.id)
-                      setIsOpen(false)
-                    }}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
-                      activeMenu === item.id
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon size={18} />
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          <button
-            onClick={toggleMenu}
-            className="md:hidden p-2 hover:bg-gray-100 rounded-lg"
-          >
-            <MenuIcon size={24} />
-          </button>
-        </div>
-
-        {isOpen && (
-          <div className="md:hidden pb-4 border-t">
-            {menuItems.map(item => {
-              const Icon = item.icon
-              return (
+    <nav style={styles.navBar}>
+      <div style={styles.navContainer}>
+        <h1 style={styles.navTitle}>ДКА Конструктор</h1>
+        
+        <ul style={{ ...styles.navMenu, display: 'flex', '@media (max-width: 768px)': { display: 'none' } }}>
+          {menuItems.map(item => {
+            const Icon = item.icon
+            const isActive = activeMenu === item.id
+            return (
+              <li key={item.id}>
                 <button
-                  key={item.id}
                   onClick={() => {
                     onMenuClick(item.id)
                     setIsOpen(false)
                   }}
-                  className={`w-full flex items-center space-x-2 px-4 py-3 text-left transition ${
-                    activeMenu === item.id
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  style={{
+                    ...styles.navButton,
+                    ...(isActive ? styles.navButtonActive : {}),
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.target.style.backgroundColor = '#e5e7eb'
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.target.style.backgroundColor = 'transparent'
+                  }}
                 >
                   <Icon size={18} />
-                  <span className="font-medium">{item.label}</span>
+                  <span>{item.label}</span>
                 </button>
-              )
-            })}
-          </div>
-        )}
+              </li>
+            )
+          })}
+        </ul>
+
+        <button
+          onClick={toggleMenu}
+          style={{
+            ...styles.button,
+            display: 'none',
+            '@media (max-width: 768px)': { display: 'inline-flex' },
+            backgroundColor: 'transparent',
+            color: '#374151',
+          }}
+          onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        >
+          <MenuIcon size={24} />
+        </button>
       </div>
+
+      {isOpen && (
+        <div style={{ borderTop: '1px solid #e5e7eb', display: 'none, '@media (max-width: 768px)': { display: 'block' } }}>
+          {menuItems.map(item => {
+            const Icon = item.icon
+            const isActive = activeMenu === item.id
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  onMenuClick(item.id)
+                  setIsOpen(false)
+                }}
+                style={{
+                  ...styles.navButton,
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  padding: '12px 16px',
+                  ...(isActive ? styles.navButtonActive : {}),
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) e.target.style.backgroundColor = '#e5e7eb'
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) e.target.style.backgroundColor = 'transparent'
+                }}
+              >
+                <Icon size={18} />
+                <span>{item.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
     </nav>
   )
 }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Download, FileText } from 'lucide-react'
+import { styles } from '../../styles'
 
 export default function ExportPage() {
   const [error, setError] = useState('')

@@ -4,6 +4,7 @@ import MainView from './components/MainView'
 import AboutModal from './components/modals/AboutModal'
 import ThemeModal from './components/modals/ThemeModal'
 import HelpModal from './components/modals/HelpModal'
+import { styles } from './styles'
 
 export default function App() {
   const [activeMenu, setActiveMenu] = useState('home')
@@ -24,9 +25,9 @@ export default function App() {
   }
 
   return (
-    <div className="app-container">
+    <div style={styles.container} className="app-container">
       <Menu onMenuClick={handleMenuClick} activeMenu={activeMenu} />
-      <div className="main-content">
+      <div style={styles.mainContent} className="main-content">
         <MainView activeMenu={activeMenu} />
       </div>
 

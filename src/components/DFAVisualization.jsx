@@ -1,4 +1,5 @@
 import React from 'react'
+import { styles } from '../styles'
 
 export default function DFAVisualization({ dfa, viewMode }) {
   if (viewMode === 'table') {

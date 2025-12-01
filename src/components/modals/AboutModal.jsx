@@ -1,24 +1,27 @@
 import React from 'react'
 import { X } from 'lucide-react'
+import { styles } from '../../styles'
 
 export default function AboutModal({ onClose }) {
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-gray-800">Об авторе</h2>
+    <div style={styles.modalOverlay} onClick={onClose}>
+      <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#374151' }}>Об авторе</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded transition"
+            style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '4px' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
           >
             <X size={24} />
           </button>
         </div>
 
-        <div className="space-y-4 text-gray-700">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', color: '#374151' }}>
           <div>
-            <h3 className="font-bold text-lg mb-2">Информация о разработчике</h3>
-            <p className="text-sm leading-relaxed">
+            <h3 style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '8px' }}>Информация о разработчике</h3>
+            <p style={{ fontSize: '14px', lineHeight: '1.6' }}>
               Данное приложение было разработано для решения курсовой работы по теме
               "Построение конструкций, задающих язык" в рамках дисциплины "Теория
               автоматов и формальных языков" (ТАУЯ).
@@ -26,11 +29,11 @@ export default function AboutModal({ onClose }) {
           </div>
 
           <div>
-            <h3 className="font-bold text-lg mb-2">Цель приложения</h3>
-            <p className="text-sm leading-relaxed">
+            <h3 style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '8px' }}>Цель приложения</h3>
+            <p style={{ fontSize: '14px', marginBottom: '8px' }}>
               Приложение предназначено для:
             </p>
-            <ul className="list-disc list-inside text-sm space-y-1 mt-2">
+            <ul style={{ paddingLeft: '20px', fontSize: '14px', space: '4px', lineHeight: '1.6' }}>
               <li>Построения детерминированного конечного автомата (ДКА)</li>
               <li>Проверки цепочек на принадлежность языку</li>
               <li>Визуализации функции переходов в виде таблицы и графа</li>
@@ -39,21 +42,20 @@ export default function AboutModal({ onClose }) {
           </div>
 
           <div>
-            <h3 className="font-bold text-lg mb-2">Технологии</h3>
-            <p className="text-sm leading-relaxed">
+            <h3 style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '8px' }}>Технологии</h3>
+            <p style={{ fontSize: '14px', marginBottom: '8px' }}>
               Приложение разработано на:
             </p>
-            <ul className="list-disc list-inside text-sm space-y-1 mt-2">
+            <ul style={{ paddingLeft: '20px', fontSize: '14px', lineHeight: '1.6' }}>
               <li>React - фреймворк для создания интерфейса</li>
-              <li>Vite - быстрый инструмент сборки</li>
-              <li>Tailwind CSS - фреймворк для стилизации</li>
+              <li>Create React App - инструмент для построения проекта</li>
               <li>Lucide React - библиотека иконок</li>
             </ul>
           </div>
 
-          <div className="bg-blue-50 p-4 rounded border border-blue-200">
-            <h4 className="font-bold text-gray-800 mb-2">Лицензия</h4>
-            <p className="text-sm text-gray-700">
+          <div style={styles.infoBox}>
+            <h4 style={{ fontWeight: 'bold', color: '#1e40af', marginBottom: '8px' }}>Лицензия</h4>
+            <p style={{ fontSize: '14px', color: '#374151' }}>
               Это учебный проект, разработанный в образовательных целях.
             </p>
           </div>
@@ -61,7 +63,9 @@ export default function AboutModal({ onClose }) {
 
         <button
           onClick={onClose}
-          className="mt-6 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
+          style={{ ...styles.button, ...styles.buttonPrimary, marginTop: '24px', width: '100%' }}
+          onMouseEnter={(e) => e.target.style.backgroundColor = styles.buttonPrimaryHover.backgroundColor}
+          onMouseLeave={(e) => e.target.style.backgroundColor = styles.buttonPrimary.backgroundColor}
         >
           Закрыть
         </button>
