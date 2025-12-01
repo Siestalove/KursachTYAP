@@ -242,57 +242,18 @@ function buildDFA(alphabet, substring, multiplicity) {
   const substringArray = substring.split('')
   const substringLen = substringArray.length
   
-  // Вычисление KMP failure function для подстроки
-  const buildFailureFunction = () => {
-    const failure = new Array(substringLen + 1).fill(0)
-    let j = 0
-    
-    for (let i = 1; i < substringLen; i++) {
-      while (j > 0 && substringArray[i] !== substringArray[j]) {
-        j = failure[j]
-      }
-      if (substringArray[i] === substringArray[j]) {
-        j++
-      }
-      failure[i + 1] = j
-    }
-    
-    return failure
-  }
-  
-  const failure = buildFailureFunction()
-  
-  // Функция перехода для поиска подстроки
-  const getNextPrefixLen = (currentLen, symbol) => {
-    let len = currentLen
-    
-    // Если уже нашли подстроку, откатываемся для поиска новых вхождений
-    if (len === substringLen) {
-      len = failure[len]
-    }
-    
-    // Пытаемся продлить текущий префикс
-    while (len > 0 && substringArray[len] !== symbol) {
-      len = failure[len]
-    }
-    
-    // Если символ совпадает, увеличиваем длину префикса
-    if (substringArray[len] === symbol) {
-      len++
-    }
-    
-    return len
-  }
-  
-  // Состояния представлены как (prefixLen, lengthMod, found)
-  // found - был ли найден substring хотя бы один раз
+  // Состояния представлены как (prefixLen, lengthMod)
+  // prefixLen: сколько символов подстроки совпадает с концом текущей строки (0...substringLen)
+  // lengthMod: остаток от деления длины строки на multiplicity (0...multiplicity-1)
   const states = new Set()
   const transitions = {}
   const stateMap = new Map()
+  
   let stateId = 0
   
-  const getOrCreateState = (prefixLen, lengthMod, found) => {
-    const key = `${prefixLen},${lengthMod},${found}`
+  // Создание или получение состояния
+  const getOrCreateState = (prefixLen, lengthMod) => {
+    const key = `${prefixLen},${lengthMod}`
     if (stateMap.has(key)) {
       return stateMap.get(key)
     }
@@ -302,40 +263,76 @@ function buildDFA(alphabet, substring, multiplicity) {
     return stateName
   }
   
-  // Начальное состояние
-  const initialState = getOrCreateState(0, 0, false)
+  // Функция отката (failure function) - определяет новый префикс после добавления символа
+  const computeNextPrefix = (currentPrefixLen, symbol) => {
+    // Пробуем добавить символ к текущему префиксу
+    let testLen = currentPrefixLen
+    while (testLen > 0) {
+      if (substringArray[testLen] === symbol) {
+        return testLen + 1
+      }
+      // Откатываемся назад
+      testLen = computeFailure(testLen)
+    }
+    // Проверяем, совпадает ли символ с началом подстроки
+    return substringArray[0] === symbol ? 1 : 0
+  }
+  
+  // Вычисление failure function для KMP-подобного алгоритма
+  const computeFailure = (len) => {
+    for (let k = len - 1; k > 0; k--) {
+      let match = true
+      for (let i = 0; i < k; i++) {
+        if (substringArray[i] !== substringArray[len - k + i]) {
+          match = false
+          break
+        }
+      }
+      if (match) return k
+    }
+    return 0
+  }
+  
+  // Начальное состояние: префикс длины 0, длина строки 0 mod multiplicity
+  const initialState = getOrCreateState(0, 0)
   
   // Построение всех состояний и переходов
-  for (let found = 0; found <= 1; found++) {
-    for (let prefixLen = 0; prefixLen <= substringLen; prefixLen++) {
-      for (let lengthMod = 0; lengthMod < multiplicity; lengthMod++) {
-        const currentState = getOrCreateState(prefixLen, lengthMod, found === 1)
-        transitions[currentState] = {}
+  // Нам нужно обработать все комбинации (prefixLen, lengthMod)
+  for (let prefixLen = 0; prefixLen <= substringLen; prefixLen++) {
+    for (let lengthMod = 0; lengthMod < multiplicity; lengthMod++) {
+      const currentState = getOrCreateState(prefixLen, lengthMod)
+      transitions[currentState] = {}
+      
+      for (const symbol of alphabetArray) {
+        let newPrefixLen
         
-        for (const symbol of alphabetArray) {
-          // Вычисляем новую длину префикса после чтения символа
-          const newPrefixLen = getNextPrefixLen(prefixLen, symbol)
-          
-          // Вычисляем новый остаток длины
-          const newLengthMod = (lengthMod + 1) % multiplicity
-          
-          // Проверяем, нашли ли мы подстроку
-          const newFound = found === 1 || newPrefixLen === substringLen
-          
-          // Создаем переход
-          const nextState = getOrCreateState(newPrefixLen, newLengthMod, newFound)
-          transitions[currentState][symbol] = nextState
+        if (prefixLen === substringLen) {
+          // Уже нашли подстроку, продолжаем искать новые вхождения
+          newPrefixLen = computeNextPrefix(substringLen - 1, symbol)
+        } else if (substringArray[prefixLen] === symbol) {
+          // Символ продолжает текущий префикс
+          newPrefixLen = prefixLen + 1
+        } else {
+          // Символ не продолжает префикс, используем откат
+          newPrefixLen = computeNextPrefix(prefixLen, symbol)
         }
+        
+        // Новый остаток длины
+        const newLengthMod = (lengthMod + 1) % multiplicity
+        
+        // Создаем переход
+        const nextState = getOrCreateState(newPrefixLen, newLengthMod)
+        transitions[currentState][symbol] = nextState
       }
     }
   }
   
-  // Финальные состояния: подстрока была найдена (found === true) И длина кратна multiplicity (lengthMod === 0)
+  // Финальные состояния: подстрока найдена (prefixLen === substringLen) И длина кратна multiplicity (lengthMod === 0)
   const finalStates = new Set()
-  for (let prefixLen = 0; prefixLen <= substringLen; prefixLen++) {
-    const finalState = getOrCreateState(prefixLen, 0, true)
-    if (states.has(finalState)) {
-      finalStates.add(finalState)
+  for (let lengthMod = 0; lengthMod < multiplicity; lengthMod++) {
+    const state = getOrCreateState(substringLen, lengthMod)
+    if (lengthMod === 0) {
+      finalStates.add(state)
     }
   }
   
