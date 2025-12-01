@@ -1,5 +1,4 @@
 import React from 'react'
-import { styles } from '../styles'
 
 export default function DFAVisualization({ dfa, viewMode }) {
   if (viewMode === 'table') {
@@ -88,20 +87,6 @@ function DFAGraph({ dfa }) {
 
   const positions = calculatePositions()
 
-  const drawArrowHead = (x1, y1, x2, y2) => {
-    const angle = Math.atan2(y2 - y1, x2 - x1)
-    const size = 12
-
-    return {
-      points: [
-        [x2, y2],
-        [x2 - size * Math.cos(angle - Math.PI / 6), y2 - size * Math.sin(angle - Math.PI / 6)],
-        [x2 - size * Math.cos(angle + Math.PI / 6), y2 - size * Math.sin(angle + Math.PI / 6)],
-      ],
-    }
-  }
-
-  const lines = []
   const edges = new Map()
 
   for (const state of dfa.states) {
@@ -120,21 +105,6 @@ function DFAGraph({ dfa }) {
         }
         edges.get(edgeKey).push(symbol)
       }
-    }
-  }
-
-  const getLineAttributes = (from, to, edgeIndex, totalEdges) => {
-    if (from === to) {
-      return {
-        type: 'curve',
-        curveDir: edgeIndex % 2 === 0 ? 1 : -1,
-      }
-    }
-
-    const offset = (edgeIndex - Math.floor(totalEdges / 2)) * 0.15
-    return {
-      type: 'line',
-      offset,
     }
   }
 

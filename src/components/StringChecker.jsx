@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { Play, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
-import { styles } from '../styles'
 
 export default function StringChecker({ dfa, checkResults, setCheckResults }) {
   const [inputString, setInputString] = useState('')

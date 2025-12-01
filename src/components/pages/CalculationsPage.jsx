@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Plus, Trash2, Eye, EyeOff } from 'lucide-react'
-import DFABuilder from '../DFABuilder'
 import StringChecker from '../StringChecker'
 import DFAVisualization from '../DFAVisualization'
 import { styles } from '../../styles'
@@ -14,6 +13,37 @@ export default function CalculationsPage() {
   const [success, setSuccess] = useState('')
   const [viewMode, setViewMode] = useState('table')
   const [checkResults, setCheckResults] = useState([])
+
+  // Загружаем данные из localStorage при монтировании компонента
+  useEffect(() => {
+    const savedDFAData = localStorage.getItem('dfa_data')
+    if (savedDFAData) {
+      try {
+        const data = JSON.parse(savedDFAData)
+        setDfa(data.dfa)
+        setAlphabet(data.alphabet)
+        setSubstring(data.substring)
+        setMultiplicity(data.multiplicity)
+        setCheckResults(data.checkResults || [])
+      } catch (err) {
+        console.error('Ошибка загрузки данных:', err)
+      }
+    }
+  }, [])
+
+  // Сохраняем данные в localStorage при изменении DFA или results
+  useEffect(() => {
+    if (dfa) {
+      const dataToSave = {
+        dfa,
+        alphabet,
+        substring,
+        multiplicity,
+        checkResults,
+      }
+      localStorage.setItem('dfa_data', JSON.stringify(dataToSave))
+    }
+  }, [dfa, checkResults, alphabet, substring, multiplicity])
 
   const handleBuildDFA = () => {
     setError('')
@@ -67,6 +97,7 @@ export default function CalculationsPage() {
     setError('')
     setSuccess('')
     setCheckResults([])
+    localStorage.removeItem('dfa_data')
   }
 
   return (

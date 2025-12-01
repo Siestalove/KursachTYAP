@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { Download, FileText } from 'lucide-react'
-import { styles } from '../../styles'
 
 export default function ExportPage() {
   const [error, setError] = useState('')
@@ -11,9 +10,9 @@ export default function ExportPage() {
     setError('')
     setSuccess('')
 
-    const results = JSON.parse(localStorage.getItem('dfa_results') || '{}')
+    const results = JSON.parse(localStorage.getItem('dfa_data') || '{}')
 
-    if (!results.dfa && !results.checkResults) {
+    if (!results.dfa) {
       setError('Нет данных для экспорта. Сначала постройте ДКА и проверьте цепочки.')
       return
     }

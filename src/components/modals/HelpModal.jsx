@@ -3,7 +3,7 @@ import { X } from 'lucide-react'
 import { styles } from '../../styles'
 
 export default function HelpModal({ onClose }) {
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('format')
 
   return (
     <div style={styles.modalOverlay} onClick={onClose}>
@@ -22,7 +22,6 @@ export default function HelpModal({ onClose }) {
 
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '1px solid #e5e7eb' }}>
           {[
-            { id: 'overview', label: 'Обзор' },
             { id: 'format', label: 'Формат' },
             { id: 'examples', label: 'Примеры' },
           ].map(tab => (
@@ -52,25 +51,6 @@ export default function HelpModal({ onClose }) {
         </div>
 
         <div style={{ fontSize: '14px', color: '#374151', lineHeight: '1.6', maxHeight: '400px', overflowY: 'auto' }}>
-          {activeTab === 'overview' && (
-            <div>
-              <h3 style={{ fontWeight: '600', marginBottom: '8px' }}>Что такое ДКА?</h3>
-              <p style={{ marginBottom: '16px' }}>
-                Детерминированный конечный автомат (ДКА) - это математическая модель распознавания языков.
-                ДКА состоит из состояний, алфавита и правил переходов между состояниями.
-              </p>
-
-              <h3 style={{ fontWeight: '600', marginBottom: '8px' }}>Как работает программа?</h3>
-              <ol style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-                <li>Введите параметры языка (алфавит, подцепочка, кратность)</li>
-                <li>Система построит соответствующий ДКА</li>
-                <li>Введите цепочку для проверки</li>
-                <li>Программа покажет, принадлежит ли цепочка языку</li>
-                <li>Экспортируйте результаты в файл</li>
-              </ol>
-            </div>
-          )}
-
           {activeTab === 'format' && (
             <div>
               <h3 style={{ fontWeight: '600', marginBottom: '8px' }}>Формат ввода - Алфавит</h3>
