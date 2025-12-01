@@ -63,6 +63,53 @@ function DFAGraph({ dfa }) {
   const minHeight = 900
   const padding = 120
   const stateRadius = 40
+  const svgRef = React.useRef(null)
+
+  // Функция для скачивания графа как PNG изображения
+  const downloadGraphImage = () => {
+    if (!svgRef.current) return
+
+    try {
+      // Получаем SVG элемент
+      const svgElement = svgRef.current
+      const serializer = new XMLSerializer()
+      const svgString = serializer.serializeToString(svgElement)
+      
+      // Создаем canvas для конвертации в PNG
+      const canvas = document.createElement('canvas')
+      canvas.width = minWidth
+      canvas.height = minHeight
+      const ctx = canvas.getContext('2d')
+      
+      // Создаем Image из SVG
+      const img = new Image()
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
+      const url = URL.createObjectURL(svgBlob)
+      
+      img.onload = () => {
+        // Рисуем на canvas
+        ctx.fillStyle = 'white'
+        ctx.fillRect(0, 0, minWidth, minHeight)
+        ctx.drawImage(img, 0, 0)
+        
+        // Конвертируем canvas в PNG и скачиваем
+        canvas.toBlob((blob) => {
+          const downloadUrl = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.download = 'dfa-graph.png'
+          link.href = downloadUrl
+          link.click()
+          URL.revokeObjectURL(downloadUrl)
+          URL.revokeObjectURL(url)
+        }, 'image/png')
+      }
+      
+      img.src = url
+    } catch (error) {
+      console.error('Ошибка при скачивании изображения:', error)
+      alert('Произошла ошибка при скачивании изображения')
+    }
+  }
 
   const calculatePositions = () => {
     const positions = {}
@@ -191,6 +238,38 @@ function DFAGraph({ dfa }) {
 
   return (
     <>
+      {/* Кнопка скачивания */}
+      <div style={{ 
+        marginBottom: '16px', 
+        display: 'flex', 
+        justifyContent: 'flex-end',
+        gap: '10px'
+      }}>
+        <button
+          onClick={downloadGraphImage}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#2196F3',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'background-color 0.2s',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}
+          onMouseOver={(e) => e.target.style.backgroundColor = '#1976D2'}
+          onMouseOut={(e) => e.target.style.backgroundColor = '#2196F3'}
+        >
+          <span>📥</span>
+          Скачать граф как изображение
+        </button>
+      </div>
+
       <div style={{ 
         overflowX: 'auto', 
         overflowY: 'auto', 
@@ -201,6 +280,7 @@ function DFAGraph({ dfa }) {
         border: '1px solid #ddd' 
       }}>
         <svg 
+          ref={svgRef}
           width={minWidth} 
           height={minHeight} 
           style={{ 
@@ -596,85 +676,6 @@ function DFAGraph({ dfa }) {
               </div>
             </div>
           </div>
-          
-          {/* Переходы */}
-          <div>
-            <h5 style={{ 
-              fontWeight: '600', 
-              color: '#374151', 
-              marginBottom: '12px',
-              fontSize: '14px'
-            }}>
-              Переходы:
-            </h5>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <svg width="50" height="24" style={{ flexShrink: 0 }}>
-                  <defs>
-                    <marker id="legend-arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3" />
-                    </marker>
-                  </defs>
-                  <line x1="5" y1="12" x2="45" y2="12" stroke="#2196F3" strokeWidth="2" markerEnd="url(#legend-arrow-blue)"/>
-                </svg>
-                <div>
-                  <div style={{ fontSize: '13px', color: '#1565C0', fontWeight: '500' }}>
-                    Переход по символу
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
-                    Из одного состояния по одному символу — только в одно состояние (ДКА)
-                  </div>
-                </div>
-              </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <svg width="50" height="28" style={{ flexShrink: 0 }}>
-                  <defs>
-                    <marker id="legend-arrow-blue2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3" />
-                    </marker>
-                  </defs>
-                  <path d="M5,18 Q25,6 45,18" stroke="#2196F3" fill="none" strokeWidth="2" markerEnd="url(#legend-arrow-blue2)"/>
-                </svg>
-                <div>
-                  <div style={{ fontSize: '13px', color: '#1565C0', fontWeight: '500' }}>
-                    Переход с изгибом
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
-                    Когда есть переход в обе стороны между двумя состояниями
-                  </div>
-                </div>
-              </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <svg width="50" height="40" style={{ flexShrink: 0 }}>
-                  <defs>
-                    <marker id="legend-arrow-pink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#e91e63" />
-                    </marker>
-                  </defs>
-                  <path d="M25,20 C35,10 40,15 35,25 C30,35 25,30 25,20" stroke="#e91e63" fill="none" strokeWidth="2" markerEnd="url(#legend-arrow-pink)"/>
-                </svg>
-                <div style={{ fontSize: '13px', color: '#c2185b', fontWeight: '500' }}>
-                  Самоцикл (петля)
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div style={{ 
-          marginTop: '16px', 
-          paddingTop: '16px', 
-          borderTop: '1px solid #e5e7eb',
-          fontSize: '12px',
-          color: '#6b7280',
-          lineHeight: '1.6'
-        }}>
-          <strong style={{ color: '#374151' }}>Примечания:</strong><br/>
-          • Символы на стрелках (через запятую) указывают, по каким входным символам происходит переход<br/>
-          • Пунктирные линии соединяют метки с соответствующими переходами<br/>
-          • Начальное состояние помечено входящей стрелкой слева
         </div>
       </div>
     </>
